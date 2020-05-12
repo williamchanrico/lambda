@@ -74,6 +74,9 @@ def handler(event, context):
 
     evt = json.loads(event)
     instance_id = evt.get("content")["resourceId"]
+    event_instance_state = evt.get("content")["state"]
+    if event_instance_state != "Running":
+        return "Ignoring non-Running instance"
 
     # Wait for Alicloud's Backend to propagate the instance creation event
     # This prevents No Resource Found error
@@ -101,6 +104,7 @@ def handler(event, context):
     try:
         trail_event_user_agent = trail_event["userAgent"]
     except KeyError:
+        trail_event_user_agent = ""
         pass
 
     trail_event_user_name = trail_event["userIdentity"]["userName"]
@@ -109,7 +113,7 @@ def handler(event, context):
     trail_event_event_time = trail_event_event_time_obj.strftime(
         "%b %d %Y %H:%M:%S") + " WIB"
 
-    if trail_event_user_agent:
+    if trail_event_user_agent != "":
         slack_message = '*{}* has created an instance: _{}_\n> _{}_'.format(
             trail_event_user_name, trail_event_instance_name,
             trail_event_user_agent)
