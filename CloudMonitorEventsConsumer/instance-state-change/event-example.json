@@ -1,0 +1,14 @@
+{
+  "product": "ECS",
+  "resourceId": "acs:ecs:cn-shanghai:1208559439424161:instance/i-abcdef",
+  "level": "INFO",
+  "instanceName": "instanceName",
+  "regionId": "ap-southeast-1",
+  "name": "Instance:StateChange",
+  "content": {
+    "resourceId": "i-abcdef",
+    "state": "Running",
+    "resourceType": "ALIYUN::ECS::Instance"
+  },
+  "status": "Normal"
+}
