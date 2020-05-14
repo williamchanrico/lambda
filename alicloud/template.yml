@@ -4,7 +4,7 @@ Resources:
   CloudMonitorEventsConsumer:
     Type: "Aliyun::Serverless::Service"
     Properties:
-      Role: "acs:ram::1208559439424161:role/cloudmonitoreventsconsumer"
+      Role: "acs:ram::3942416112085594:role/cloudmonitoreventsconsumer"
       LogConfig:
         Project: aliyun-fc-ap-southeast-1-fa55716e-481b-5823-82e1-0c5e7e1e9716
         Logstore: function-log
@@ -14,7 +14,7 @@ Resources:
       Properties:
         Handler: index.handler
         Runtime: python3
-        Timeout: 15
+        Timeout: 60
         MemorySize: 128
         EnvironmentVariables:
           SLACK_WEBHOOK_URL: >-

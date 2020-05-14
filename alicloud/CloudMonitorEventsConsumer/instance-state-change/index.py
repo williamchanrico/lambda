@@ -55,11 +55,11 @@ def lookup_events(event_name, resource_name):
 
 def init(event, context):
     evt = json.loads(event)
-    regionID = evt.get("regionId")
+    region_id = evt.get("regionId")
 
     global ACS_CLIENT
     ACS_CLIENT = AcsClient(os.getenv("accessKeyID"),
-                           os.getenv("accessKeySecret"), regionID)
+                           os.getenv("accessKeySecret"), region_id)
 
 
 def handler(event, context):
@@ -74,6 +74,7 @@ def handler(event, context):
 
     evt = json.loads(event)
     instance_id = evt.get("content")["resourceId"]
+    region_id = evt.get("regionId")
     event_instance_state = evt.get("content")["state"]
     if event_instance_state != "Running":
         return "Ignoring non-Running instance"
@@ -101,10 +102,10 @@ def handler(event, context):
         "InstanceType"]
     trail_event_source_ip_address = trail_event["sourceIpAddress"]
 
+    trail_event_user_agent = ""
     try:
         trail_event_user_agent = trail_event["userAgent"]
     except KeyError:
-        trail_event_user_agent = ""
         pass
 
     trail_event_user_name = trail_event["userIdentity"]["userName"]
@@ -150,6 +151,23 @@ def handler(event, context):
                 'text':
                 '*Source IP:*\n{}'.format(trail_event_source_ip_address)
             }]
+        }, {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': '.'
+            },
+            'accessory': {
+                'type':
+                'button',
+                'text': {
+                    'type': 'plain_text',
+                    'text': 'Go to Console'
+                },
+                'url':
+                'https://ecs.console.aliyun.com/#/server/{}/detail?regionId={}'
+                .format(instance_id, region_id)
+            }
         }],
         'icon_emoji':
         ':topedbersih:',
@@ -162,5 +180,5 @@ def handler(event, context):
     slack_response = requests.post(slack_webhook_url,
                                    headers=headers,
                                    data=json.dumps(slack_payload))
-    logger.debug(slack_response)
+    logger.info('slack_response:', slack_response)
     return 'OK'
