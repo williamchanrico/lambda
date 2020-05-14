@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Simple test of Lambda equivalent on Alicloud called Function Compute.
+Trying Lambda equivalent on Alicloud called Function Compute.
 This script will listen for CloudMonitorService webhook instance:state_change,
 and will then query ActionTrails for any manual instance creation events.
 It will report details of that event via Slack webhook.
@@ -81,7 +81,7 @@ def handler(event, context):
 
     # Wait for Alicloud's Backend to propagate the instance creation event
     # This prevents No Resource Found error
-    time.sleep(15)
+    time.sleep(7)
 
     instances = describe_instance(instance_id)
     if instances["TotalCount"] <= 0:
@@ -95,32 +95,21 @@ def handler(event, context):
         return "Trail Events not found"
 
     trail_event = trail_events["Events"][0]
-    trail_event_key_pair_name = trail_event["requestParameters"]["KeyPairName"]
-    trail_event_instance_name = trail_event["requestParameters"][
-        "InstanceName"]
-    trail_event_instance_type = trail_event["requestParameters"][
-        "InstanceType"]
-    trail_event_source_ip_address = trail_event["sourceIpAddress"]
 
-    trail_event_user_agent = ""
-    try:
-        trail_event_user_agent = trail_event["userAgent"]
-    except KeyError:
-        pass
-
-    trail_event_user_name = trail_event["userIdentity"]["userName"]
+    # Default is UTC tz, we want user-friendly GMT+7 formatted time
     trail_event_event_time_obj = parser.parse(
         trail_event["eventTime"]) + timedelta(hours=7)
     trail_event_event_time = trail_event_event_time_obj.strftime(
         "%b %d %Y %H:%M:%S") + " WIB"
 
-    if trail_event_user_agent != "":
-        slack_message = '*{}* has created an instance: _{}_\n> _{}_'.format(
-            trail_event_user_name, trail_event_instance_name,
-            trail_event_user_agent)
-    else:
-        slack_message = '*{}* has created an instance: _{}_\n'.format(
-            trail_event_user_name, trail_event_instance_name)
+    if "userAgent" not in trail_event:
+        trail_event[
+            "userAgent"] = "Empty UA (Web Console activities show no UA in the background API calls)"
+
+    slack_message = '_{}_ has created an instance: *{}*\n> _{}_'.format(
+        trail_event["userIdentity"]["userName"],
+        trail_event["requestParameters"]["InstanceName"],
+        trail_event["userAgent"])
 
     slack_payload = {
         'blocks': [{
@@ -136,7 +125,8 @@ def handler(event, context):
                 'type':
                 'mrkdwn',
                 'text':
-                '*Instance Type:*\n{}'.format(trail_event_instance_type)
+                '*Instance Type:*\n{}'.format(
+                    trail_event["requestParameters"]["InstanceType"])
             }, {
                 'type': 'mrkdwn',
                 'text': '*When:*\n{}'.format(trail_event_event_time)
@@ -144,18 +134,19 @@ def handler(event, context):
                 'type':
                 'mrkdwn',
                 'text':
-                '*Key Pair:*\n{}'.format(trail_event_key_pair_name)
+                '*Key Pair:*\n{}'.format(
+                    trail_event["requestParameters"]["KeyPairName"])
             }, {
                 'type':
                 'mrkdwn',
                 'text':
-                '*Source IP:*\n{}'.format(trail_event_source_ip_address)
+                '*Source IP:*\n{}'.format(trail_event["sourceIpAddress"])
             }]
         }, {
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
-                'text': '.'
+                'text': '☕'
             },
             'accessory': {
                 'type':
@@ -180,5 +171,4 @@ def handler(event, context):
     slack_response = requests.post(slack_webhook_url,
                                    headers=headers,
                                    data=json.dumps(slack_payload))
-    logger.info('slack_response:', slack_response)
     return 'OK'
