@@ -65,7 +65,6 @@ def init(event, context):
 def handler(event, context):
     init(event, context)
     logger = logging.getLogger()
-    logger.info("New instance has been detected!")
 
     slack_webhook_url = os.getenv("SLACK_WEBHOOK_URL")
     slack_channel = os.getenv("SLACK_CHANNEL")
@@ -95,6 +94,8 @@ def handler(event, context):
         return "Trail Events not found"
 
     trail_event = trail_events["Events"][0]
+    logger.info("New instance creation event: {}".format(
+        str(json.dumps(trail_event, indent=4))))
 
     # Default is UTC tz, we want user-friendly GMT+7 formatted time
     trail_event_event_time_obj = parser.parse(
