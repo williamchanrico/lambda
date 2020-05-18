@@ -2,10 +2,9 @@ version = 0.1
 [default]
 [default.deploy]
 [default.deploy.parameters]
-stack_name = "instanceStateChangeNotification"
+stack_name = "resource-state-monitor"
 s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-vpw0crva31e5"
-s3_prefix = "instanceStateChangeNotification"
+s3_prefix = "resource-state-monitor"
 region = "ap-southeast-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-

@@ -14,11 +14,11 @@ Resources:
       Properties:
         Handler: index.handler
         Runtime: python3
-        Timeout: 60
+        Timeout: 30
         MemorySize: 128
         EnvironmentVariables:
           SLACK_WEBHOOK_URL: >-
             "https://hooks.slack.com/services/XYZ/ABC/QWE"
           SLACK_CHANNEL: >-
             "#testing"
-        CodeUri: ./CloudMonitorEventsConsumer/instance-state-change
+        CodeUri: ./instance-state-change
