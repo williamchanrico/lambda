@@ -1,0 +1,16 @@
+{
+  "Comment": "Delays CloudTrail event lookup process because there might be a delay on its propagation",
+  "StartAt": "wait_25_minutes",
+  "States": {
+    "wait_25_minutes": {
+      "Type": "Wait",
+      "Seconds": 1500,
+      "Next": "process_event"
+    },
+    "process_event": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:ap-southeast-1:626083858306:function:instanceStateChangeNotification",
+      "End": true
+    }
+  }
+}

@@ -14,7 +14,6 @@ It will report details of that event via Slack webhook.
 
 import os
 import json
-import time
 import logging
 import requests
 from dateutil import parser
