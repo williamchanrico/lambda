@@ -81,12 +81,17 @@ def lambda_handler(event, context):
     instances = describe_instance(event_instance_id)
     if len(instances) <= 0:
         return "Instance not found"
+    logger.info("Instance: {}".format(str(instances)))
     instance = instances[0]
 
     trail_events = lookup_events("RunInstances", event_instance_id)
     if len(trail_events) <= 0:
         return "Trail Events not found"
+    logger.info("TrailEvents: {}".format(str(trail_events)))
 
+    trail_events = [
+        x for x in trail_events if x["EventName"] == "RunInstances"
+    ]
     trail_event = json.loads(trail_events[0]["CloudTrailEvent"])
     logger.info("New instance creation event: {}".format(
         str(json.dumps(trail_event, indent=4))))
@@ -103,7 +108,6 @@ def lambda_handler(event, context):
     slack_message = '_{}_ has created an instance: *{}* ({})\n> _{}_'.format(
         trail_event["userIdentity"]["userName"], event_instance_id,
         instance["PrivateIpAddress"], trail_event["userAgent"])
-    logger.info("slack_message: {}".format(str(slack_message)))
 
     slack_payload = {
         'blocks': [{
@@ -175,6 +179,7 @@ def lambda_handler(event, context):
         slack_channel
     }
     headers = {'Content-type': 'application/json'}
+    logger.info("slack_message: {}".format(str(slack_payload)))
     slack_response = requests.post(slack_webhook_url,
                                    headers=headers,
                                    data=json.dumps(slack_payload))
