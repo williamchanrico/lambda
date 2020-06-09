@@ -16,9 +16,9 @@ import os
 import json
 import time
 import logging
-import requests
-from dateutil import parser
 from datetime import timedelta
+from dateutil import parser
+import requests
 
 from aliyunsdkcore.client import AcsClient
 from aliyunsdkcore.acs_exception.exceptions import ClientException
@@ -30,6 +30,7 @@ ACS_CLIENT = None
 
 
 def describe_instance(instance_id):
+    """ Describe an ECS instance """
     global ACS_CLIENT
 
     request = DescribeInstancesRequest.DescribeInstancesRequest()
@@ -42,6 +43,7 @@ def describe_instance(instance_id):
 
 
 def lookup_events(event_name, resource_name):
+    """ Lookup ActionTrails event """
     global ACS_CLIENT
 
     request = LookupEventsRequest.LookupEventsRequest()
@@ -54,22 +56,23 @@ def lookup_events(event_name, resource_name):
 
 
 def init(event, context):
+    """ Initialize global components """
     evt = json.loads(event)
     region_id = evt.get("regionId")
 
     global ACS_CLIENT
-    ACS_CLIENT = AcsClient(os.getenv("accessKeyID"),
-                           os.getenv("accessKeySecret"), region_id)
+    ACS_CLIENT = AcsClient(os.getenv("accessKeyID"), os.getenv("accessKeySecret"), region_id)
 
 
 def handler(event, context):
+    """ Main entrypoint """
     init(event, context)
     logger = logging.getLogger()
 
     slack_webhook_url = os.getenv("SLACK_WEBHOOK_URL")
     slack_channel = os.getenv("SLACK_CHANNEL")
     if not slack_webhook_url:
-        raise Exception('SLACK_WEBHOOK_URL is not set')
+        raise Exception("SLACK_WEBHOOK_URL is not set")
 
     evt = json.loads(event)
     instance_id = evt.get("content")["resourceId"]
@@ -94,82 +97,55 @@ def handler(event, context):
         return "Trail Events not found"
 
     trail_event = trail_events["Events"][0]
-    logger.info("New instance creation event: {}".format(
-        str(json.dumps(trail_event, indent=4))))
+    logger.info("New instance creation event: %s", str(json.dumps(trail_event, indent=4)))
 
     # Default is UTC tz, we want user-friendly GMT+7 formatted time
-    trail_event_event_time_obj = parser.parse(
-        trail_event["eventTime"]) + timedelta(hours=7)
-    trail_event_event_time = trail_event_event_time_obj.strftime(
-        "%b %d %Y %H:%M:%S") + " WIB"
+    trail_event_event_time_obj = parser.parse(trail_event["eventTime"]) + timedelta(hours=7)
+    trail_event_event_time = trail_event_event_time_obj.strftime("%b %d %Y %H:%M:%S") + " WIB"
 
     if "userAgent" not in trail_event:
-        trail_event[
-            "userAgent"] = "Empty UA (Web Console activities show no UA in the background API calls)"
+        trail_event["userAgent"] = "Empty UA (Web Console activities show no UA in the background API calls)"
 
-    slack_message = '_{}_ has created an instance: *{}*\n> _{}_'.format(
+    slack_message = "_{}_ has created an instance: *{}*\n> _{}_".format(
         trail_event["userIdentity"]["userName"],
         trail_event["requestParameters"]["InstanceName"],
-        trail_event["userAgent"])
+        trail_event["userAgent"],
+    )
 
     slack_payload = {
-        'blocks': [{
-            'type': 'section',
-            'text': {
-                'type': 'mrkdwn',
-                'text': slack_message
-            }
-        }, {
-            'type':
-            'section',
-            'fields': [{
-                'type':
-                'mrkdwn',
-                'text':
-                '*Instance Type:*\n{}'.format(
-                    trail_event["requestParameters"]["InstanceType"])
-            }, {
-                'type': 'mrkdwn',
-                'text': '*When:*\n{}'.format(trail_event_event_time)
-            }, {
-                'type':
-                'mrkdwn',
-                'text':
-                '*Key Pair:*\n{}'.format(
-                    trail_event["requestParameters"]["KeyPairName"])
-            }, {
-                'type':
-                'mrkdwn',
-                'text':
-                '*Source IP:*\n{}'.format(trail_event["sourceIpAddress"])
-            }]
-        }, {
-            'type': 'section',
-            'text': {
-                'type': 'mrkdwn',
-                'text': '☕'
+        "blocks": [
+            {"type": "section", "text": {"type": "mrkdwn", "text": slack_message}},
+            {
+                "type": "section",
+                "fields": [
+                    {
+                        "type": "mrkdwn",
+                        "text": "*Instance Type:*\n{}".format(trail_event["requestParameters"]["InstanceType"]),
+                    },
+                    {"type": "mrkdwn", "text": "*When:*\n{}".format(trail_event_event_time)},
+                    {
+                        "type": "mrkdwn",
+                        "text": "*Key Pair:*\n{}".format(trail_event["requestParameters"]["KeyPairName"]),
+                    },
+                    {"type": "mrkdwn", "text": "*Source IP:*\n{}".format(trail_event["sourceIpAddress"])},
+                ],
             },
-            'accessory': {
-                'type':
-                'button',
-                'text': {
-                    'type': 'plain_text',
-                    'text': 'Go to Console'
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": "☕"},
+                "accessory": {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": "Go to Console"},
+                    "url": "https://ecs.console.aliyun.com/#/server/{}/detail?regionId={}".format(
+                        instance_id, region_id
+                    ),
                 },
-                'url':
-                'https://ecs.console.aliyun.com/#/server/{}/detail?regionId={}'
-                .format(instance_id, region_id)
-            }
-        }],
-        'icon_emoji':
-        ':topedbersih:',
-        'username':
-        'Bang Ali',
-        'channel':
-        slack_channel
+            },
+        ],
+        "icon_emoji": ":topedbersih:",
+        "username": "Bang Ali",
+        "channel": slack_channel,
     }
-    headers = {'Content-type': 'application/json'}
-    slack_response = requests.post(slack_webhook_url,
-                                   headers=headers,
-                                   data=json.dumps(slack_payload))
-    return 'OK'
+    headers = {"Content-type": "application/json"}
+    slack_response = requests.post(slack_webhook_url, headers=headers, data=json.dumps(slack_payload))
+    return "OK"
