@@ -1,0 +1,12 @@
+aliyun-python-sdk-actiontrail==2.0.1
+aliyun-python-sdk-core==2.13.19
+aliyun-python-sdk-ecs==4.19.8
+certifi==2020.6.20
+chardet==3.0.4
+idna==2.9
+jmespath==0.10.0
+pycryptodome==3.9.7
+python-dateutil==2.8.1
+requests==2.24.0
+six==1.15.0
+urllib3==1.25.9
