@@ -9,3 +9,5 @@ Serverless Compute Collections
 ## AWS Lambda
 
 ## AWS Step Function
+
+## Google Cloud Function
