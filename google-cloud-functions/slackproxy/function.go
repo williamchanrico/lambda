@@ -18,7 +18,7 @@ func PublishMessage(w http.ResponseWriter, r *http.Request) {
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		resp = fmt.Sprintf("Failed to read request body: %v", err)
+		resp = fmt.Sprintf("Available structure: %v\nFailed to read request body: %v", helpMessage(), err)
 		log.Error(resp)
 		http.Error(w, resp, http.StatusBadRequest)
 		return
@@ -27,7 +27,7 @@ func PublishMessage(w http.ResponseWriter, r *http.Request) {
 
 	msg, err := readMessage(body)
 	if err != nil {
-		resp = fmt.Sprintf("Failed to read message from body: %v", err)
+		resp = fmt.Sprintf("Available structure: %v\nFailed to read message from body: %v", helpMessage(), err)
 		log.Error(resp)
 		http.Error(w, resp, http.StatusBadRequest)
 		return
@@ -35,13 +35,12 @@ func PublishMessage(w http.ResponseWriter, r *http.Request) {
 
 	err = validateMessage(msg)
 	if err != nil {
-		resp = fmt.Sprintf("Invalid message: %v", err)
+		resp = fmt.Sprintf("Available structure: %v\nInvalid message: %v", helpMessage(), err)
 		log.Error(resp)
 		http.Error(w, resp, http.StatusBadRequest)
 		return
 	}
 
-	log.Debugf("Publishing to projectID=%v topicID=%v: %#v", projectID, topicID, string(body))
 	msgID, err := publishMessage(ctx, projectID, topicID, msg)
 	if err != nil {
 		resp = fmt.Sprintf("Failed to publish: %v", err)
@@ -50,7 +49,7 @@ func PublishMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp = fmt.Sprintf("Successfully published message with ID: %v\n", msgID)
+	resp = fmt.Sprintf("Success with ID: %v\n", msgID)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(resp))
 
@@ -61,17 +60,17 @@ func PublishMessage(w http.ResponseWriter, r *http.Request) {
 func ConsumeMessage(ctx context.Context, m pubsub.Message) error {
 	msg, err := readMessage(m.Data)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error readMessage (msg=%v): %v", string(m.Data), err)
 	}
 
 	err = validateMessage(msg)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error validateMessage (msg=%v): %v", string(m.Data), err)
 	}
 
 	_, err = msg.Send(slackClient)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error msg.Send (msg=%v): %v", string(m.Data), err)
 	}
 
 	return nil
