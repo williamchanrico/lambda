@@ -4,7 +4,7 @@
 
 No more leaks on these `https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX`
 
-![slackproxy.png](./slackproxy.png)
+<center><img src="./slackproxy.png" width="500" /></center>
 
 1. Avoids injecting Slack Webhook Token in simple scripts all over the place
 2. Provides a place to aggeragte and work on Slack notification traffic
