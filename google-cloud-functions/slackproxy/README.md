@@ -1,11 +1,11 @@
 ## Slack Proxy
 
-> A simple HTTP and Background function to receive/send Slack Webhook notification (instead of hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX)
+> A simple HTTP and Background function to receive/send Slack Webhook notification.
 
-```
-client --> slack-proxy/PublishMessage --> pub/sub <-- slack-proxy/ConsumeMessage --> https://hooks.slack.com/services/XXX
-```
+No more leaks on these `https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX`
 
-1. Avoid the needs for simple internal scripts holding Slack Webhook URL token
-2. Provides a place to aggeragte and work with Slack notification traffic
-3. Acting as optional middleware in-case we want to expand the dumb proxy into a more generic alerting proxy/platform
+![slackproxy.png](./slackproxy.png)
+
+1. Avoids injecting Slack Webhook Token in simple scripts all over the place
+2. Provides a place to aggeragte and work on Slack notification traffic
+3. Acts as optional middleware in-case we want to expand the dumb proxy into a more generic alerting proxy/platform
